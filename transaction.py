@@ -1,6 +1,7 @@
 import datetime
 from accounts import Cheking_account, Credit_account, Savings_account
 from logger import Logger
+from user import User
 log = Logger()
 
 class Transaction:
@@ -11,7 +12,8 @@ class Transaction:
         cls.__id += 1
         return cls.__id - 1
 
-    def __init__(self, amount: float, source : (Credit_account, Cheking_account, Savings_account) = None , target : (Credit_account, Cheking_account, Savings_account) = None) -> None :
+    def __init__(self, amount: float, source : (Credit_account, Cheking_account, Savings_account) = None,
+                 target : (Credit_account, Cheking_account, Savings_account) = None) -> None :
 
         if not isinstance(amount, float) or not (source is None or isinstance(source, (Credit_account, Cheking_account, Savings_account))) or not (target is None or isinstance(target, (Credit_account, Cheking_account, Savings_account))):
             log.exception("Неправильні типи данних в атрибутах: amount, source, targer або через недопустиме значення в amount", TypeError())
@@ -105,4 +107,7 @@ class CalculateInterestTransaction(Transaction):
         self._amount = self._target.calculate_interest()
         self._target.deposit(self._amount)
         log.info(f"Нараховано {self._amount} грн відсотків. Транзакція #{self._transaction_id}")
+
+
+
 
