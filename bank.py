@@ -80,3 +80,19 @@ class Bank:
 
         return self._accounts.get(account_id)
 
+    def close_account(self, account: (Cheking_account, Credit_account, Savings_account)):
+        if not isinstance(account, (Cheking_account, Credit_account, Savings_account)):
+            e = Exception(
+                f"account повинно бути об'єктом одного з класів: (Cheking_account, Credit_account, Savings_account), а не {account}")
+            log.exception("Недопустиме значення аргументу", e)
+            raise e
+        if isinstance(account, Credit_account):
+            if self._balance == self._limit and self._credit == 0:
+                account.block_account()
+        else:
+            if self.balance == 0:
+                account.block_account()
+
+
+
+
