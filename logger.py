@@ -31,5 +31,6 @@ class Logger:
     def exception(self, message: str, exc: Exception):
         self._write("EXCEPTION", f"{message}: {type(exc).__name__} - {exc}")
 
+log = Logger()
 
 
