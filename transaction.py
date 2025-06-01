@@ -1,8 +1,9 @@
 import datetime
+from types import NoneType
 from accounts import Cheking_account, Credit_account, Savings_account
-from logger import Logger
+from logger import log
 from user import User
-log = Logger()
+
 
 class Transaction:
     __id = 1
@@ -12,19 +13,24 @@ class Transaction:
         cls.__id += 1
         return cls.__id - 1
 
-    def __init__(self, amount: float, source : (Credit_account, Cheking_account, Savings_account) = None,
+    def __init__(self, amount: (float, int), source : (Credit_account, Cheking_account, Savings_account) = None,
                  target : (Credit_account, Cheking_account, Savings_account) = None) -> None :
 
-        if not isinstance(amount, float) or not (source is None or isinstance(source, (Credit_account, Cheking_account, Savings_account))) or not (target is None or isinstance(target, (Credit_account, Cheking_account, Savings_account))):
-            log.exception("Неправильні типи данних в атрибутах: amount, source, targer або через недопустиме значення в amount", TypeError())
-            raise TypeError("Неправильні типи данних в атрибутах: amount, source, targer або через недопустиме значення в amount")
+        if not isinstance(amount, (float, int, NoneType)) or amount < 0:
+            e = Exception(f"amount повинно бути числом більше 0, а не {amount}")
+            log.exception("Недопустиме значення аргументу", e)
+            raise e
 
-        if amount < 0:
-            log.exception(
-                "amount повинен бути більше 0",
-                ValueError())
-            raise TypeError(
-                "amount повинен бути більше 0")
+        if not isinstance(source, (Cheking_account, Credit_account, Savings_account, NoneType)):
+            e = Exception(f"source повинно бути об'єктом одного з класів: (Cheking_account, Credit_account, Savings_account, NoneType), а не {source}")
+            log.exception("Недопустиме значення аргументу", e)
+            raise e
+
+        if not isinstance(target, (Cheking_account, Credit_account, Savings_account, NoneType)):
+            e = Exception(f"target повинно бути об'єктом одного з класів: (Cheking_account, Credit_account, Savings_account, NoneType), а не {target}")
+            log.exception("Недопустиме значення аргументу", e)
+            raise e
+
 
         self._transaction_id = Transaction.change_id()
         self._source = source
@@ -63,6 +69,10 @@ class DepositTransaction(Transaction):
 
 class TransferTransaction(Transaction):
     def __init__(self, amount : float, source : (Credit_account, Cheking_account, Savings_account) = None , target : (Credit_account, Cheking_account, Savings_account) = None) -> None:
+        if source is None or target is None:
+            e = TypeError("source, target - не можуть бути None")
+            log.exception("Неприпустиме значення атрибутів", e)
+            raise e
         super().__init__(amount, source, target)
 
     def execute(self):
@@ -94,20 +104,28 @@ class WithdrawTransaction(Transaction):
 class CalculateInterestTransaction(Transaction):
 
     def __init__(self, target : (Credit_account, Cheking_account, Savings_account)):
-        super().__init__(1, None, target)
+        if not isinstance(target, (Credit_account, Savings_account)):
+            e = Exception(f"target повинно бути об'єктом одного з класів: (Credit_account, Savings_account), а не {target}")
+            log.exception("Недопустиме значення аргументу", e)
+            raise e
+        amount = self._target.calculate_interest()
+        super().__init__(None, None, target)
 
 
     def execute(self):
+
         try:
-            self._check_blocked()
+            if isinstance(self._target, Credit_account):
+                self._target._credit += self._target.calculate_interest()
+
+            if isinstance(self._target, Savings_account):
+                self._target.deposit(self._target.calculate_interest())
+
         except Exception as e:
             log.exception(f"Помилка транзакції #{self._transaction_id}", e)
             raise e
 
-        self._amount = self._target.calculate_interest()
-        self._target.deposit(self._amount)
         log.info(f"Нараховано {self._amount} грн відсотків. Транзакція #{self._transaction_id}")
-
 
 
 
