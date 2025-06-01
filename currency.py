@@ -1,5 +1,6 @@
 import requests
 import datetime
+from logger import log
 
 class CurrencyRates:
 
@@ -21,6 +22,15 @@ class CurrencyRates:
                 }
 
     def convert(self, amount, from_currency, to_currency):
+        if from_currency not in ["UAH", "USD", "EUR"]:
+            e = Exception(f"from_currency : {from_currency} - невідоме значення")
+            log.exception("Невідома стартова валюта", e)
+            raise e
+        if to_currency not in ["UAH", "USD", "EUR"]:
+            e = Exception(f"to_currency : {to_currency} - невідоме значення")
+            log.exception("Невідома стартова валюта", e)
+            raise e
+
         self.update_rates()
         if from_currency == to_currency:
             return amount
