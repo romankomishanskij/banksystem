@@ -2,14 +2,41 @@ import requests
 import datetime
 from logger import log
 
+"""
+Модуль currency містить клас для роботи з курсами валют.
+
+Класи:
+- CurrencyRates: Клас для отримання та конвертації валютних курсів.
+"""
+
 class CurrencyRates:
+    """
+    Клас для роботи з курсами валют.
+
+    Атрибути:
+    - rates: Словник з курсами валют.
+    - _last_usage: Час останнього оновлення курсів.
+
+    Методи:
+    - __init__: Ініціалізує об'єкт та оновлює курси.
+    - update_rates: Оновлює курси валют через API.
+    - convert: Конвертує суму з однієї валюти в іншу.
+    """
 
     def __init__(self):
+        """
+        Ініціалізує об'єкт CurrencyRates та оновлює курси валют.
+        """
         self.rates = {}
         self.update_rates()
         self._last_usage = datetime.datetime.now()
 
     def update_rates(self):
+        """
+        Оновлює курси валют через API ПриватБанку.
+
+        Оновлює дані кожну годину.
+        """
         now = datetime.datetime.now()
         if now - self._last_usage > datetime.timedelta(hours=1):
             url = 'https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5'
@@ -22,6 +49,20 @@ class CurrencyRates:
                 }
 
     def convert(self, amount, from_currency, to_currency):
+        """
+        Конвертує суму з однієї валюти в іншу.
+
+        Аргументи:
+            amount (float): Сума для конвертації.
+            from_currency (str): Валюта, з якої конвертуємо.
+            to_currency (str): Валюта, в яку конвертуємо.
+
+        Повертає:
+            float: Конвертована сума.
+
+        Винятки:
+            Exception: Якщо валюта не підтримується.
+        """
         if from_currency not in ["UAH", "USD", "EUR"]:
             e = Exception(f"from_currency : {from_currency} - невідоме значення")
             log.exception("Невідома стартова валюта", e)
