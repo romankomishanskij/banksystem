@@ -2,8 +2,7 @@ import datetime
 from types import NoneType
 from accounts import Cheking_account, Credit_account, Savings_account
 from logger import log
-from user import User
-
+from currency import currate
 
 class Transaction:
     __id = 1
@@ -68,7 +67,7 @@ class DepositTransaction(Transaction):
         log.info(f"Була проведена транзакція з id : {self._transaction_id}")
 
 class TransferTransaction(Transaction):
-    def __init__(self, amount : float, source : (Credit_account, Cheking_account, Savings_account) = None , target : (Credit_account, Cheking_account, Savings_account) = None) -> None:
+    def __init__(self, amount : float, source : (Credit_account, Cheking_account, Savings_account), target : (Credit_account, Cheking_account, Savings_account)) -> None:
         if source is None or target is None:
             e = TypeError("source, target - не можуть бути None")
             log.exception("Неприпустиме значення атрибутів", e)
@@ -82,8 +81,9 @@ class TransferTransaction(Transaction):
             log.exception(f"Помилка транзакції #{self._transaction_id}", e)
             raise e
 
+        real_amount = currate.convert(self._amount, self._source._currency, self._target._suported_currency)
         self._source.withdraw(self._amount)
-        self._target.deposit(self._amount)
+        self._target.deposit(real_amount)
         log.info(f"Була проведена транзакція з id : {self._transaction_id}")
 
 class WithdrawTransaction(Transaction):
@@ -113,7 +113,6 @@ class CalculateInterestTransaction(Transaction):
 
 
     def execute(self):
-
         try:
             if isinstance(self._target, Credit_account):
                 self._target._credit += self._target.calculate_interest()
@@ -125,7 +124,10 @@ class CalculateInterestTransaction(Transaction):
             log.exception(f"Помилка транзакції #{self._transaction_id}", e)
             raise e
 
+        self._amount = self._target.calculate_interest()
+        self._target.deposit(self._amount)
         log.info(f"Нараховано {self._amount} грн відсотків. Транзакція #{self._transaction_id}")
+
 
 
 
